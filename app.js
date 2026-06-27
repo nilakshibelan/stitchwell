@@ -38,6 +38,8 @@ const elements = {
 
 const REMOTE_SYNC_ENABLED = Boolean(SHEETS_ENDPOINT);
 
+let editingMemberId = null;
+
 const views = document.querySelectorAll('.view');
 const tabButtons = document.querySelectorAll('.tab-button');
 
@@ -274,6 +276,25 @@ function createMemberRow(member) {
     actions.append(remind);
   }
 
+  const edit = document.createElement('button');
+  edit.textContent = 'Edit';
+  edit.className = 'secondary-button';
+  edit.onclick = () => openMemberForm(member);
+  actions.append(edit);
+
+  const remove = document.createElement('button');
+  remove.textContent = 'Delete';
+  remove.className = 'secondary-button';
+  remove.onclick = () => {
+    const confirmed = confirm(`Delete ${member.name}? This will remove their payment history and membership data.`);
+    if (!confirmed) return;
+    state.members = state.members.filter(m => m.id !== member.id);
+    saveState();
+    renderMembers();
+    updateDashboard();
+  };
+  actions.append(remove);
+
   row.append(info, actions);
   return row;
 }
@@ -411,14 +432,33 @@ function showView(viewId) {
   tabButtons.forEach(button => button.classList.toggle('active', button.dataset.view === viewId));
 }
 
+function setMemberFormMode(isEditing) {
+  const submitButton = elements.memberForm.querySelector('button[type="submit"]');
+  if (submitButton) {
+    submitButton.textContent = isEditing ? 'Update Member' : 'Save Member';
+  }
+}
+
 function resetForm() {
+  editingMemberId = null;
   elements.memberName.value = '';
   elements.memberPhone.value = '';
   elements.memberForm.classList.add('hidden');
+  setMemberFormMode(false);
 }
 
 function showAddMemberForm() {
+  resetForm();
   elements.memberForm.classList.remove('hidden');
+  elements.memberName.focus();
+}
+
+function openMemberForm(member) {
+  editingMemberId = member.id;
+  elements.memberName.value = member.name;
+  elements.memberPhone.value = member.phone || '';
+  elements.memberForm.classList.remove('hidden');
+  setMemberFormMode(true);
   elements.memberName.focus();
 }
 
@@ -448,13 +488,23 @@ function addMember(event) {
   const name = elements.memberName.value.trim();
   const phone = elements.memberPhone.value.trim();
   if (!name) return;
-  state.members.push({
-    id: Date.now().toString(),
-    name,
-    phone,
-    paidThisMonth: false,
-    paymentHistory: [],
-  });
+
+  if (editingMemberId) {
+    const member = state.members.find(m => m.id === editingMemberId);
+    if (member) {
+      member.name = name;
+      member.phone = phone;
+    }
+  } else {
+    state.members.push({
+      id: Date.now().toString(),
+      name,
+      phone,
+      paidThisMonth: false,
+      paymentHistory: [],
+    });
+  }
+
   saveState();
   renderMembers();
   updateDashboard();
