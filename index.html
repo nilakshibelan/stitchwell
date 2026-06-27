@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LJ Boutique Lucky Draw Manager</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="brand">LJ Boutique</p>
+        <p class="subtitle">Lucky Draw & Club Collection</p>
+      </div>
+      <button id="themeToggle" class="icon-button" title="Toggle theme">☀️</button>
+    </header>
+
+    <section class="hero-card">
+      <div>
+        <h1>Manage members, payments, draws and vouchers</h1>
+        <p>Fast mobile-friendly tracking for your womens savings club.</p>
+      </div>
+      <div class="hero-actions">
+        <button data-view="dashboard" class="primary-button">View Dashboard</button>
+        <button data-view="members" class="secondary-button">Manage Members</button>
+      </div>
+    </section>
+
+    <nav class="tab-bar" aria-label="Primary navigation">
+      <button class="tab-button active" data-view="dashboard">Dashboard</button>
+      <button class="tab-button" data-view="members">Members</button>
+      <button class="tab-button" data-view="draw">Lucky Draw</button>
+      <button class="tab-button" data-view="vouchers">Vouchers</button>
+    </nav>
+
+    <main>
+      <section id="dashboard" class="view active-view">
+        <div class="cards-grid">
+          <article class="card">
+            <h2>Total Members</h2>
+            <p id="totalMembers">0</p>
+          </article>
+          <article class="card">
+            <h2>Paid This Month</h2>
+            <p id="paidCount">0</p>
+          </article>
+          <article class="card">
+            <h2>Active Vouchers</h2>
+            <p id="activeVouchers">0</p>
+          </article>
+          <article class="card card-highlight">
+            <h2>Next Draw</h2>
+            <p id="nextDrawLabel">Select month</p>
+          </article>
+        </div>
+        <div class="panel sync-panel">
+          <h3>Google Sheets Sync</h3>
+          <p id="syncStatus">Offline mode: using local browser storage.</p>
+          <button id="syncButton" class="secondary-button">Sync Now</button>
+        </div>
+      </section>
+
+      <section id="members" class="view">
+        <div class="section-header">
+          <div>
+            <h2>Members</h2>
+            <p>Add new ladies and track their monthly payments.</p>
+          </div>
+          <div class="header-actions">
+            <button id="sendBulkReminders" class="secondary-button">Send Bulk Reminders</button>
+            <button id="showAddMember" class="primary-button">Add Member</button>
+          </div>
+        </div>
+
+        <form id="memberForm" class="panel hidden">
+          <h3>Add New Member</h3>
+          <label>
+            Name
+            <input type="text" id="memberName" placeholder="Sita Sharma" required />
+          </label>
+          <label>
+            Phone
+            <input type="tel" id="memberPhone" placeholder="98765 43210" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary-button">Save Member</button>
+            <button type="button" id="cancelMember" class="secondary-button">Cancel</button>
+          </div>
+        </form>
+
+        <div class="panel">
+          <div class="table-header">
+            <p>Member list</p>
+            <p>Payments this month</p>
+          </div>
+          <div id="memberList" class="table-scroll"></div>
+        </div>
+      </section>
+
+      <section id="draw" class="view">
+        <div class="section-header">
+          <div>
+            <h2>Lucky Draw</h2>
+            <p>Run monthly draws and issue vouchers to winners.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <label>
+            Draw Month
+            <input type="month" id="drawMonth" />
+          </label>
+          <label>
+            Voucher Value
+            <input type="number" id="voucherAmount" value="2400" min="100" />
+          </label>
+          <button id="runDraw" class="primary-button">Run Draw</button>
+        </div>
+
+        <div class="panel" id="drawResult" hidden>
+          <h3>Last Winner</h3>
+          <p id="winnerName">No draw yet</p>
+          <p id="winnerDetails"></p>
+        </div>
+      </section>
+
+      <section id="vouchers" class="view">
+        <div class="section-header">
+          <div>
+            <h2>Vouchers</h2>
+            <p>Track voucher status, expiry and redemption.</p>
+          </div>
+        </div>
+        <div id="voucherList" class="panel table-scroll"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Local prototype. Data is saved in browser storage.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
