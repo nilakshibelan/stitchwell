@@ -1,4 +1,4 @@
-# LJ Boutique Lucky Draw Manager
+# Stitchwell Lucky Draw Manager
 
 A simple responsive web prototype to manage members, monthly payments, lucky draws, and voucher tracking for a women's boutique club.
 

@@ -104,7 +104,7 @@ function normalizePhone(rawPhone) {
 }
 
 function buildReminderMessage(member) {
-  return encodeURIComponent(`Hi ${member.name},\n\nThis is LJ Boutique. Your ₹200 monthly payment is due for this month. Please pay before the next lucky draw to keep your entry active.\n\nThank you!`);
+  return encodeURIComponent(`Hi ${member.name},\n\nThis is Stitchwell. Your ₹200 monthly payment is due for this month. Please pay before the next lucky draw to keep your entry active.\n\nThank you!`);
 }
 
 function sendWhatsAppMessage(phone, message) {

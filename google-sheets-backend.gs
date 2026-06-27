@@ -1,5 +1,5 @@
 /**
- * Google Apps Script backend for LJ Boutique manager.
+ * Google Apps Script backend for Stitchwell manager.
  *
  * Instructions:
  * 1. Create a new Google Sheet.
