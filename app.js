@@ -15,7 +15,10 @@ const elements = {
   nextDrawLabel: document.getElementById('nextDrawLabel'),
   memberList: document.getElementById('memberList'),
   voucherList: document.getElementById('voucherList'),
+  memberFormModal: document.getElementById('memberFormModal'),
   memberForm: document.getElementById('memberForm'),
+  memberFormTitle: document.getElementById('memberFormTitle'),
+  closeMemberForm: document.getElementById('closeMemberForm'),
   showAddMember: document.getElementById('showAddMember'),
   sendBulkReminders: document.getElementById('sendBulkReminders'),
   cancelMember: document.getElementById('cancelMember'),
@@ -437,19 +440,26 @@ function setMemberFormMode(isEditing) {
   if (submitButton) {
     submitButton.textContent = isEditing ? 'Update Member' : 'Save Member';
   }
+  if (elements.memberFormTitle) {
+    elements.memberFormTitle.textContent = isEditing ? 'Edit Member' : 'Add New Member';
+  }
 }
 
 function resetForm() {
   editingMemberId = null;
   elements.memberName.value = '';
   elements.memberPhone.value = '';
-  elements.memberForm.classList.add('hidden');
+  if (elements.memberFormModal) {
+    elements.memberFormModal.classList.add('hidden');
+  }
   setMemberFormMode(false);
 }
 
 function showAddMemberForm() {
   resetForm();
-  elements.memberForm.classList.remove('hidden');
+  if (elements.memberFormModal) {
+    elements.memberFormModal.classList.remove('hidden');
+  }
   elements.memberName.focus();
 }
 
@@ -457,7 +467,9 @@ function openMemberForm(member) {
   editingMemberId = member.id;
   elements.memberName.value = member.name;
   elements.memberPhone.value = member.phone || '';
-  elements.memberForm.classList.remove('hidden');
+  if (elements.memberFormModal) {
+    elements.memberFormModal.classList.remove('hidden');
+  }
   setMemberFormMode(true);
   elements.memberName.focus();
 }
@@ -584,7 +596,12 @@ function init() {
   elements.showAddMember.addEventListener('click', showAddMemberForm);
   elements.sendBulkReminders.addEventListener('click', sendBulkWhatsAppReminders);
   elements.cancelMember.addEventListener('click', resetForm);
-  elements.memberForm.addEventListener('submit', addMember);
+  if (elements.closeMemberForm) {
+    elements.closeMemberForm.addEventListener('click', resetForm);
+  }
+  if (elements.memberForm) {
+    elements.memberForm.addEventListener('submit', addMember);
+  }
   elements.runDraw.addEventListener('click', runLuckyDraw);
   elements.themeToggle.addEventListener('click', toggleTheme);
   elements.syncButton.addEventListener('click', syncRemoteData);

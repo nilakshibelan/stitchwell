@@ -83,21 +83,26 @@
           <p class="help-text">This month controls payment status, reminders, and draw eligibility.</p>
         </div>
 
-        <form id="memberForm" class="panel hidden">
-          <h3>Add New Member</h3>
-          <label>
-            Name
-            <input type="text" id="memberName" placeholder="Sita Sharma" required />
-          </label>
-          <label>
-            Phone
-            <input type="tel" id="memberPhone" placeholder="98765 43210" />
-          </label>
-          <div class="form-actions">
-            <button type="submit" class="primary-button">Save Member</button>
-            <button type="button" id="cancelMember" class="secondary-button">Cancel</button>
-          </div>
-        </form>
+        <div id="memberFormModal" class="modal hidden">
+          <form id="memberForm" class="modal-content panel">
+            <div class="modal-header">
+              <h3 id="memberFormTitle">Add New Member</h3>
+              <button id="closeMemberForm" type="button" class="icon-button" title="Close">✕</button>
+            </div>
+            <label>
+              Name
+              <input type="text" id="memberName" placeholder="Sita Sharma" required />
+            </label>
+            <label>
+              Phone
+              <input type="tel" id="memberPhone" placeholder="98765 43210" />
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="primary-button">Save Member</button>
+              <button type="button" id="cancelMember" class="secondary-button">Cancel</button>
+            </div>
+          </form>
+        </div>
 
         <div class="panel">
           <div class="table-header">
