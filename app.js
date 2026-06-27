@@ -523,7 +523,11 @@ function addMember(event) {
   resetForm();
 }
 
+let drawInProgress = false;
+
 function runLuckyDraw() {
+  if (drawInProgress) return;
+
   const monthValue = elements.drawMonth.value;
   const amount = Number(elements.voucherAmount.value) || 2400;
   if (!monthValue || state.members.length === 0) {
@@ -537,32 +541,48 @@ function runLuckyDraw() {
     return;
   }
 
-  const winner = entries[Math.floor(Math.random() * entries.length)];
-  const expiry = new Date(monthValue + '-01');
-  expiry.setMonth(expiry.getMonth() + 2);
+  drawInProgress = true;
+  elements.runDraw.disabled = true;
+  elements.drawStatus.classList.remove('hidden');
+  elements.drawResult.hidden = true;
+  const drawTitle = elements.drawStatus.querySelector('.draw-animation p');
+  if (drawTitle) {
+    drawTitle.textContent = `Drawing from ${entries.length} eligible member${entries.length > 1 ? 's' : ''}...`;
+  }
 
-  const voucher = {
-    id: Date.now().toString(),
-    memberId: winner.id,
-    memberName: winner.name,
-    amount,
-    issuedDate: new Date().toISOString(),
-    expiryDate: expiry.toISOString(),
-    status: 'active',
-    drawMonth: monthValue,
-  };
-  state.vouchers.push(voucher);
-  state.lastDraw = {
-    month: monthValue,
-    winnerName: winner.name,
-    amount,
-    issuedDate: new Date().toISOString(),
-  };
-  state.drawHistory.push(state.lastDraw);
-  saveState();
-  renderVouchers();
-  updateDashboard();
-  showDrawResult();
+  const drawDelay = 2200;
+  setTimeout(() => {
+    const winner = entries[Math.floor(Math.random() * entries.length)];
+    const expiry = new Date(monthValue + '-01');
+    expiry.setMonth(expiry.getMonth() + 2);
+
+    const voucher = {
+      id: Date.now().toString(),
+      memberId: winner.id,
+      memberName: winner.name,
+      amount,
+      issuedDate: new Date().toISOString(),
+      expiryDate: expiry.toISOString(),
+      status: 'active',
+      drawMonth: monthValue,
+    };
+
+    state.vouchers.push(voucher);
+    state.lastDraw = {
+      month: monthValue,
+      winnerName: winner.name,
+      amount,
+      issuedDate: new Date().toISOString(),
+    };
+    state.drawHistory.push(state.lastDraw);
+    saveState();
+    renderVouchers();
+    updateDashboard();
+    elements.drawStatus.classList.add('hidden');
+    elements.runDraw.disabled = false;
+    showDrawResult();
+    drawInProgress = false;
+  }, drawDelay);
 }
 
 function showDrawResult() {

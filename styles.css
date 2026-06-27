@@ -192,6 +192,33 @@ main {
   font-weight: 500;
 }
 
+.draw-status {
+  text-align: center;
+}
+
+.draw-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 8px solid rgba(109, 40, 217, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .report-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
