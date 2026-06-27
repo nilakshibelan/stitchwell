@@ -28,6 +28,10 @@ const elements = {
   drawMonth: document.getElementById('drawMonth'),
   voucherAmount: document.getElementById('voucherAmount'),
   runDraw: document.getElementById('runDraw'),
+  drawStatus: document.getElementById('drawStatus'),
+  drawWheel: document.getElementById('drawWheel'),
+  drawBanner: document.getElementById('drawBanner'),
+  drawPopup: document.getElementById('drawPopup'),
   drawResult: document.getElementById('drawResult'),
   winnerName: document.getElementById('winnerName'),
   winnerDetails: document.getElementById('winnerDetails'),
@@ -529,6 +533,17 @@ function showDrawStatus(message) {
   if (!elements.drawStatus) return;
   elements.drawStatus.classList.remove('hidden');
   elements.drawStatus.hidden = false;
+  const spinner = elements.drawStatus.querySelector('.spinner');
+  if (spinner) {
+    spinner.classList.remove('hidden');
+  }
+  if (elements.drawBanner) {
+    elements.drawBanner.classList.add('hidden');
+  }
+  if (elements.drawPopup) {
+    elements.drawPopup.classList.add('hidden');
+    elements.drawPopup.hidden = true;
+  }
   elements.drawStatus.querySelector('.draw-animation p').textContent = message;
 }
 
@@ -536,6 +551,127 @@ function hideDrawStatus() {
   if (!elements.drawStatus) return;
   elements.drawStatus.classList.add('hidden');
   elements.drawStatus.hidden = true;
+  const spinner = elements.drawStatus.querySelector('.spinner');
+  if (spinner) {
+    spinner.classList.add('hidden');
+  }
+  if (elements.drawBanner) {
+    elements.drawBanner.classList.add('hidden');
+  }
+  if (elements.drawPopup) {
+    elements.drawPopup.classList.add('hidden');
+    elements.drawPopup.hidden = true;
+  }
+}
+
+function showWinnerBanner(winnerName) {
+  if (!elements.drawBanner) return;
+  elements.drawBanner.textContent = `🎉 Winner: ${winnerName} 🎉`;
+  elements.drawBanner.classList.remove('hidden');
+}
+
+function showDrawPopup(winnerName) {
+  if (!elements.drawPopup) return;
+  elements.drawPopup.textContent = `Congratulations ${winnerName}! Final winner is revealed.`;
+  elements.drawPopup.classList.remove('hidden');
+}
+
+function hideDrawPopup() {
+  if (!elements.drawPopup) return;
+  elements.drawPopup.classList.add('hidden');
+}
+
+function clearWinnerHighlight() {
+  if (!elements.drawWheel) return;
+  const wheelRing = elements.drawWheel.querySelector('.wheel-ring');
+  if (wheelRing) {
+    wheelRing.classList.remove('winner-active');
+  }
+}
+
+function prepareLuckyDrawWheel(entries) {
+  if (!elements.drawWheel) return;
+  const wheel = elements.drawWheel;
+  let wheelRing = wheel.querySelector('.wheel-ring');
+  let labelLayer = wheel.querySelector('.wheel-labels');
+
+  let wheelCore = wheel.querySelector('.wheel-core');
+  if (!wheelCore) {
+    wheelCore = document.createElement('div');
+    wheelCore.className = 'wheel-core';
+    wheel.appendChild(wheelCore);
+  }
+
+  if (!wheelRing) {
+    wheelRing = document.createElement('div');
+    wheelRing.className = 'wheel-ring';
+    wheelCore.appendChild(wheelRing);
+  }
+
+  if (!labelLayer) {
+    labelLayer = document.createElement('div');
+    labelLayer.className = 'wheel-labels';
+    wheelCore.appendChild(labelLayer);
+  }
+
+  const colors = ['#f472b6', '#a78bfa', '#60a5fa', '#34d399', '#fbbf24', '#fb7185', '#f97316', '#38bdf8'];
+  const slice = 360 / entries.length;
+  const gradientStops = entries.map((entry, index) => {
+    const start = index * slice;
+    const end = start + slice;
+    return `${colors[index % colors.length]} ${start}deg ${end}deg`;
+  }).join(', ');
+
+  wheelRing.style.background = `conic-gradient(from ${-90 - slice / 2}deg, ${gradientStops})`;
+  wheelRing.style.transform = 'rotate(0deg)';
+  wheelRing.style.transition = 'none';
+  wheelRing.classList.remove('winner-active');
+  if (wheelCore) {
+    wheelCore.style.transform = 'rotate(0deg)';
+    wheelCore.style.transition = 'none';
+    wheelCore.style.transformOrigin = 'center center';
+  }
+  labelLayer.innerHTML = '';
+
+  const visibleLabelCount = Math.min(entries.length, 18);
+  const labelStep = Math.max(1, Math.round(entries.length / visibleLabelCount));
+  const truncate = name => name.length > 12 ? `${name.slice(0, 12)}…` : name;
+
+  entries.forEach((entry, index) => {
+    if (index % labelStep !== 0) return;
+    const label = document.createElement('div');
+    label.className = 'wheel-label';
+    label.textContent = truncate(entry.name);
+    const angle = index * slice;
+    label.style.transform = `rotate(${angle}deg) translateY(-118px) rotate(${-angle}deg)`;
+    labelLayer.appendChild(label);
+  });
+
+  if (entries.length > visibleLabelCount) {
+    const countBadge = document.createElement('div');
+    countBadge.className = 'wheel-label wheel-count-label';
+    countBadge.textContent = `${entries.length} entries`;
+    labelLayer.appendChild(countBadge);
+  }
+
+  wheel.classList.remove('hidden');
+  wheel.hidden = false;
+}
+
+function animateLuckyDrawWheel(winnerIndex, entries, duration = 5200) {
+  if (!elements.drawWheel) return;
+  const wheelCore = elements.drawWheel.querySelector('.wheel-core');
+  if (!wheelCore) return;
+
+  const slice = 360 / entries.length;
+  const targetAngle = (360 - winnerIndex * slice) % 360;
+  const spins = 6 * 360;
+  const totalRotation = spins + targetAngle;
+
+  requestAnimationFrame(() => {
+    wheelCore.style.transition = `transform ${duration / 1000}s cubic-bezier(0.33, 1, 0.68, 1)`;
+    wheelCore.style.transform = `rotate(${totalRotation}deg)`;
+  });
 }
 
 function runLuckyDraw() {
@@ -556,12 +692,15 @@ function runLuckyDraw() {
 
   drawInProgress = true;
   elements.runDraw.disabled = true;
-  showDrawStatus(`Drawing from ${entries.length} eligible member${entries.length > 1 ? 's' : ''}...`);
+  prepareLuckyDrawWheel(entries);
+  showDrawStatus(`Spinning the wheel for ${entries.length} eligible member${entries.length > 1 ? 's' : ''}...`);
   elements.drawResult.hidden = true;
 
-  const drawDelay = 2400;
+  const winner = entries[Math.floor(Math.random() * entries.length)];
+  const winnerIndex = entries.indexOf(winner);
+  const spinDuration = 9600;
+  animateLuckyDrawWheel(winnerIndex, entries, spinDuration);
   setTimeout(() => {
-    const winner = entries[Math.floor(Math.random() * entries.length)];
     const expiry = new Date(monthValue + '-01');
     expiry.setMonth(expiry.getMonth() + 2);
 
@@ -587,11 +726,26 @@ function runLuckyDraw() {
     saveState();
     renderVouchers();
     updateDashboard();
-    hideDrawStatus();
-    elements.runDraw.disabled = false;
-    showDrawResult();
-    drawInProgress = false;
-  }, drawDelay);
+    const wheelRing = elements.drawWheel?.querySelector('.wheel-ring');
+    if (wheelRing) {
+      wheelRing.classList.add('winner-active');
+    }
+    showWinnerBanner(winner.name);
+    showDrawStatus(`Winner selected: ${winner.name}!`);
+    showDrawPopup(winner.name);
+    const spinner = elements.drawStatus.querySelector('.spinner');
+    if (spinner) {
+      spinner.classList.add('hidden');
+    }
+    const popupTime = 3200;
+    setTimeout(() => {
+      hideDrawPopup();
+      hideDrawStatus();
+      elements.runDraw.disabled = false;
+      showDrawResult();
+      drawInProgress = false;
+    }, popupTime);
+  }, spinDuration + 300);
 }
 
 function showDrawResult() {

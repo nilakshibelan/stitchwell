@@ -134,6 +134,12 @@
 
         <div id="drawStatus" class="panel draw-status hidden">
           <div class="draw-animation">
+            <div id="drawWheel" class="draw-wheel hidden" aria-live="polite" aria-label="Lucky draw wheel">
+              <div class="wheel-pointer" aria-hidden="true"></div>
+              <div class="wheel-pointer-label" aria-hidden="true">WINNER</div>
+            </div>
+            <div id="drawBanner" class="draw-banner hidden" aria-live="polite"></div>
+            <div id="drawPopup" class="draw-popup hidden" role="status" aria-live="assertive"></div>
             <span class="spinner"></span>
             <p>Drawing the winner... please wait.</p>
           </div>
