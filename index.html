@@ -33,6 +33,7 @@
       <button class="tab-button" data-view="members">Members</button>
       <button class="tab-button" data-view="draw">Lucky Draw</button>
       <button class="tab-button" data-view="vouchers">Vouchers</button>
+      <button class="tab-button" data-view="reports">Reports</button>
     </nav>
 
     <main>
@@ -66,12 +67,20 @@
         <div class="section-header">
           <div>
             <h2>Members</h2>
-            <p>Add new ladies and track their monthly payments.</p>
+            <p>Add members, choose the payment month, and then mark dues paid.</p>
           </div>
           <div class="header-actions">
             <button id="sendBulkReminders" class="secondary-button">Send Bulk Reminders</button>
             <button id="showAddMember" class="primary-button">Add Member</button>
           </div>
+        </div>
+
+        <div class="panel">
+          <label>
+            Payment month
+            <input type="month" id="paymentMonth" />
+          </label>
+          <p class="help-text">This month controls payment status, reminders, and draw eligibility.</p>
         </div>
 
         <form id="memberForm" class="panel hidden">
@@ -133,6 +142,24 @@
           </div>
         </div>
         <div id="voucherList" class="panel table-scroll"></div>
+      </section>
+
+      <section id="reports" class="view">
+        <div class="section-header">
+          <div>
+            <h2>Reports</h2>
+            <p>Month-by-month analytics for payments, draws, and vouchers. Choose the report month to compare performance.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <label>
+            Report month
+            <input type="month" id="reportMonth" />
+          </label>
+          <p class="help-text">Use this month selector to generate history-based analytics for the chosen period.</p>
+        </div>
+        <div id="reportCards" class="cards-grid"></div>
+        <div class="panel" id="reportDetails"></div>
       </section>
     </main>
 

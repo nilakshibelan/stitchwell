@@ -154,6 +154,39 @@ main {
   font-weight: 700;
 }
 
+.card-meta {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.report-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+}
+
+.report-item strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.report-item span {
+  font-weight: 700;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -195,6 +228,12 @@ input {
   border: 1px solid rgba(15, 23, 42, 0.12);
   background: #fff;
   color: var(--text);
+}
+
+.help-text {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-top: 8px;
 }
 
 .form-actions {

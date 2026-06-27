@@ -5,6 +5,7 @@ const state = {
   members: [],
   vouchers: [],
   lastDraw: null,
+  drawHistory: [],
 };
 
 const elements = {
@@ -20,12 +21,16 @@ const elements = {
   cancelMember: document.getElementById('cancelMember'),
   memberName: document.getElementById('memberName'),
   memberPhone: document.getElementById('memberPhone'),
+  paymentMonth: document.getElementById('paymentMonth'),
   drawMonth: document.getElementById('drawMonth'),
   voucherAmount: document.getElementById('voucherAmount'),
   runDraw: document.getElementById('runDraw'),
   drawResult: document.getElementById('drawResult'),
   winnerName: document.getElementById('winnerName'),
   winnerDetails: document.getElementById('winnerDetails'),
+  reportMonth: document.getElementById('reportMonth'),
+  reportCards: document.getElementById('reportCards'),
+  reportDetails: document.getElementById('reportDetails'),
   themeToggle: document.getElementById('themeToggle'),
   syncStatus: document.getElementById('syncStatus'),
   syncButton: document.getElementById('syncButton'),
@@ -72,6 +77,7 @@ function loadLocalState() {
     state.members = parsed.members || [];
     state.vouchers = parsed.vouchers || [];
     state.lastDraw = parsed.lastDraw || null;
+    state.drawHistory = parsed.drawHistory || [];
   } catch (err) {
     console.warn('Error loading saved data', err);
   }
@@ -154,6 +160,7 @@ async function initializeData() {
         state.members = remote.members || state.members;
         state.vouchers = remote.vouchers || state.vouchers;
         state.lastDraw = remote.lastDraw || state.lastDraw;
+        state.drawHistory = remote.drawHistory || state.drawHistory;
         saveLocalState();
         updateSyncStatus('Loaded data from Google Sheets');
       }
@@ -173,8 +180,37 @@ function formatDate(value) {
   });
 }
 
+function getPaymentMonth() {
+  if (elements.paymentMonth && elements.paymentMonth.value) {
+    return elements.paymentMonth.value;
+  }
+  return new Date().toISOString().slice(0, 7);
+}
+
+function isMemberPaidForMonth(member, month) {
+  if (!member.paymentHistory || !month) return false;
+  return member.paymentHistory.some(entry => entry.month === month && entry.paid);
+}
+
+function setMemberPaymentForMonth(member, month, paid) {
+  if (!member.paymentHistory) member.paymentHistory = [];
+  const existing = member.paymentHistory.find(entry => entry.month === month);
+  if (existing) {
+    existing.paid = paid;
+  } else {
+    member.paymentHistory.push({ month, paid });
+  }
+}
+
+function getPreviousMonth(month) {
+  const date = new Date(`${month}-01`);
+  date.setMonth(date.getMonth() - 1);
+  return date.toISOString().slice(0, 7);
+}
+
 function updateDashboard() {
-  const paid = state.members.filter(m => m.paidThisMonth).length;
+  const monthValue = getPaymentMonth();
+  const paid = state.members.filter(member => isMemberPaidForMonth(member, monthValue)).length;
   const active = state.vouchers.filter(v => v.status === 'active').length;
 
   elements.totalMembers.textContent = state.members.length;
@@ -200,26 +236,30 @@ function createMemberRow(member) {
   name.textContent = member.name;
   const meta = document.createElement('p');
   meta.className = 'member-meta';
-  meta.textContent = member.phone ? member.phone : 'No phone added';
+  const payments = member.paymentHistory || [];
+  const lastPayment = payments.length ? payments[payments.length - 1].month : 'No month';
+  const paymentMonth = getPaymentMonth();
+  const paidThisMonth = isMemberPaidForMonth(member, paymentMonth);
+  meta.textContent = `${member.phone ? member.phone : 'No phone added'} • Last payment ${lastPayment}`;
   info.append(name, meta);
 
   const actions = document.createElement('div');
   actions.className = 'member-meta';
   const status = document.createElement('span');
-  status.className = `badge ${member.paidThisMonth ? 'paid' : 'due'}`;
-  status.textContent = member.paidThisMonth ? 'Paid' : 'Not paid';
+  status.className = `badge ${paidThisMonth ? 'paid' : 'due'}`;
+  status.textContent = paidThisMonth ? 'Paid' : 'Not paid';
   const toggle = document.createElement('button');
-  toggle.textContent = member.paidThisMonth ? 'Mark due' : 'Mark paid';
+  toggle.textContent = paidThisMonth ? 'Mark due' : 'Mark paid';
   toggle.className = 'secondary-button';
   toggle.onclick = () => {
-    member.paidThisMonth = !member.paidThisMonth;
+    setMemberPaymentForMonth(member, paymentMonth, !paidThisMonth);
     saveState();
     renderMembers();
     updateDashboard();
   };
   actions.append(status, toggle);
 
-  if (!member.paidThisMonth && member.phone) {
+  if (!paidThisMonth && member.phone) {
     const remind = document.createElement('button');
     remind.textContent = 'Send reminder';
     remind.className = 'secondary-button';
@@ -307,6 +347,65 @@ function renderVouchers() {
   state.vouchers.forEach(v => elements.voucherList.appendChild(createVoucherRow(v)));
 }
 
+function buildReportData(month) {
+  const paidThisMonth = state.members.filter(member => isMemberPaidForMonth(member, month)).length;
+  const unpaidThisMonth = state.members.length - paidThisMonth;
+  const vouchersIssued = state.vouchers.filter(v => v.drawMonth === month).length;
+  const activeVouchers = state.vouchers.filter(v => v.status === 'active').length;
+  const usedVouchers = state.vouchers.filter(v => v.status === 'used').length;
+  const expiredVouchers = state.vouchers.filter(v => v.status === 'expired').length;
+  const drawThisMonth = state.drawHistory.filter(draw => draw.month === month);
+
+  return {
+    month,
+    totalMembers: state.members.length,
+    paidThisMonth,
+    unpaidThisMonth,
+    vouchersIssued,
+    activeVouchers,
+    usedVouchers,
+    expiredVouchers,
+    drawWinner: drawThisMonth.length ? drawThisMonth[drawThisMonth.length - 1].winnerName : 'N/A',
+    drawAmount: drawThisMonth.length ? drawThisMonth[drawThisMonth.length - 1].amount : 0,
+  };
+}
+
+function renderReports() {
+  const month = elements.reportMonth.value || new Date().toISOString().slice(0, 7);
+  const report = buildReportData(month);
+
+  elements.reportCards.innerHTML = '';
+  const cards = [
+    { title: 'Members', value: report.totalMembers, subtitle: 'Total registered' },
+    { title: 'Paid', value: report.paidThisMonth, subtitle: `Paid in ${month}` },
+    { title: 'Unpaid', value: report.unpaidThisMonth, subtitle: `Not paid in ${month}` },
+    { title: 'Vouchers', value: report.vouchersIssued, subtitle: 'Issued this month' },
+  ];
+
+  cards.forEach(card => {
+    const article = document.createElement('article');
+    article.className = 'card';
+    article.innerHTML = `<h2>${card.title}</h2><p>${card.value}</p><p class="card-meta">${card.subtitle}</p>`;
+    elements.reportCards.appendChild(article);
+  });
+
+  elements.reportDetails.innerHTML = `
+    <h3>Month summary for ${new Date(`${month}-01`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</h3>
+    <div class="report-grid">
+      <div class="report-item"><strong>Active vouchers</strong><span>${report.activeVouchers}</span></div>
+      <div class="report-item"><strong>Used vouchers</strong><span>${report.usedVouchers}</span></div>
+      <div class="report-item"><strong>Expired vouchers</strong><span>${report.expiredVouchers}</span></div>
+      <div class="report-item"><strong>Draw winner</strong><span>${report.drawWinner}</span></div>
+      <div class="report-item"><strong>Winner amount</strong><span>₹${report.drawAmount}</span></div>
+    </div>
+  `;
+}
+
+function updateMemberPaymentPreview() {
+  renderMembers();
+  updateDashboard();
+}
+
 function showView(viewId) {
   views.forEach(view => view.classList.toggle('active-view', view.id === viewId));
   tabButtons.forEach(button => button.classList.toggle('active', button.dataset.view === viewId));
@@ -324,7 +423,8 @@ function showAddMemberForm() {
 }
 
 function sendBulkWhatsAppReminders() {
-  const unpaidMembers = state.members.filter(member => !member.paidThisMonth && member.phone);
+  const monthValue = getPaymentMonth();
+  const unpaidMembers = state.members.filter(member => !isMemberPaidForMonth(member, monthValue) && member.phone);
 
   if (unpaidMembers.length === 0) {
     alert('There are no unpaid members with phone numbers to remind.');
@@ -353,6 +453,7 @@ function addMember(event) {
     name,
     phone,
     paidThisMonth: false,
+    paymentHistory: [],
   });
   saveState();
   renderMembers();
@@ -368,7 +469,7 @@ function runLuckyDraw() {
     return;
   }
 
-  const entries = state.members.filter(member => member.paidThisMonth);
+  const entries = state.members.filter(member => isMemberPaidForMonth(member, getPaymentMonth()));
   if (entries.length === 0) {
     alert('No paid members available for the draw.');
     return;
@@ -386,6 +487,7 @@ function runLuckyDraw() {
     issuedDate: new Date().toISOString(),
     expiryDate: expiry.toISOString(),
     status: 'active',
+    drawMonth: monthValue,
   };
   state.vouchers.push(voucher);
   state.lastDraw = {
@@ -394,6 +496,7 @@ function runLuckyDraw() {
     amount,
     issuedDate: new Date().toISOString(),
   };
+  state.drawHistory.push(state.lastDraw);
   saveState();
   renderVouchers();
   updateDashboard();
@@ -435,6 +538,24 @@ function init() {
   elements.runDraw.addEventListener('click', runLuckyDraw);
   elements.themeToggle.addEventListener('click', toggleTheme);
   elements.syncButton.addEventListener('click', syncRemoteData);
+  elements.reportMonth.addEventListener('change', renderReports);
+  elements.paymentMonth.addEventListener('change', () => {
+    const paymentValue = elements.paymentMonth.value;
+    if (elements.reportMonth) {
+      elements.reportMonth.value = paymentValue;
+    }
+    if (elements.drawMonth) {
+      elements.drawMonth.value = paymentValue;
+    }
+    updateMemberPaymentPreview();
+    renderReports();
+  });
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  if (elements.paymentMonth && !elements.paymentMonth.value) elements.paymentMonth.value = currentMonth;
+  if (elements.reportMonth && !elements.reportMonth.value) elements.reportMonth.value = elements.paymentMonth.value || currentMonth;
+  if (elements.drawMonth && !elements.drawMonth.value) elements.drawMonth.value = elements.paymentMonth.value || currentMonth;
+  renderReports();
 }
 
 init();
