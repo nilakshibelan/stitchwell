@@ -525,6 +525,19 @@ function addMember(event) {
 
 let drawInProgress = false;
 
+function showDrawStatus(message) {
+  if (!elements.drawStatus) return;
+  elements.drawStatus.classList.remove('hidden');
+  elements.drawStatus.hidden = false;
+  elements.drawStatus.querySelector('.draw-animation p').textContent = message;
+}
+
+function hideDrawStatus() {
+  if (!elements.drawStatus) return;
+  elements.drawStatus.classList.add('hidden');
+  elements.drawStatus.hidden = true;
+}
+
 function runLuckyDraw() {
   if (drawInProgress) return;
 
@@ -543,14 +556,10 @@ function runLuckyDraw() {
 
   drawInProgress = true;
   elements.runDraw.disabled = true;
-  elements.drawStatus.classList.remove('hidden');
+  showDrawStatus(`Drawing from ${entries.length} eligible member${entries.length > 1 ? 's' : ''}...`);
   elements.drawResult.hidden = true;
-  const drawTitle = elements.drawStatus.querySelector('.draw-animation p');
-  if (drawTitle) {
-    drawTitle.textContent = `Drawing from ${entries.length} eligible member${entries.length > 1 ? 's' : ''}...`;
-  }
 
-  const drawDelay = 2200;
+  const drawDelay = 2400;
   setTimeout(() => {
     const winner = entries[Math.floor(Math.random() * entries.length)];
     const expiry = new Date(monthValue + '-01');
@@ -578,7 +587,7 @@ function runLuckyDraw() {
     saveState();
     renderVouchers();
     updateDashboard();
-    elements.drawStatus.classList.add('hidden');
+    hideDrawStatus();
     elements.runDraw.disabled = false;
     showDrawResult();
     drawInProgress = false;
